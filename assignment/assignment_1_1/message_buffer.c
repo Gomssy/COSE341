@@ -11,8 +11,16 @@ void *memory_segment=NULL;
 int init_buffer(MessageBuffer **buffer) {
     /*---------------------------------------*/
     /* TODO 1 : init buffer                  */
+    shmid = shmget(KEY, sizeof(MessageBuffer), IPC_CREAT|0666);
+    if(shmid == -1)
+	    return -1;
+    memory_segment = shmat(shmid, NULL, 0);
+    if(memory_segment == (void*)-1)
+	    return -1;
+    *buffer = (MessageBuffer *)memory_segment;
 
-    {}
+    (*buffer)->is_empty = 1;    
+    (*buffer)->account_id = -1;
 
     /* TODO 1 : END                          */
     /*---------------------------------------*/
@@ -26,7 +34,14 @@ int attach_buffer(MessageBuffer **buffer) {
     /* TODO 2 : attach buffer                */
     /* do not consider "no buffer situation" */
     
-    {}
+    if((shmid = shmget(KEY, sizeof(int), IPC_CREAT|0666)) == -1)
+	    return -1;
+		    
+    if((memory_segment = shmat(shmid, NULL, 0)) == (void *)-1)
+	    return -1;
+    *buffer = (MessageBuffer *)memory_segment;
+
+    
 
     /* TODO 2 : END                          */
     /*---------------------------------------*/
@@ -61,15 +76,30 @@ int produce(MessageBuffer **buffer, int sender_id, int data, int account_id) {
     /*---------------------------------------*/
     /* TODO 3 : produce message              */
 
-    {}
+    if((account_id < 0) || (account_id > BUFFER_SIZE))
+    {
+	    return -1;
+    }
+    else if((*buffer)->messages[account_id].data + data < 0)
+    {
+	    return -1;
+    }
+    else
+    {
+		    
+    	(*buffer)->account_id = account_id; 
+   	(*buffer)->messages[account_id].data = data;
+    	(*buffer)->messages[account_id].sender_id = sender_id;
 
-    /* TODO 3 : END                          */
+    	(*buffer)->is_empty--;
+    }
+    /* TODO 3 : END                          */   
     /*---------------------------------------*/
-
     printf("produce message\n");
 
     return 0;
 }
+
 
 int consume(MessageBuffer **buffer, Message **message) {
     if((*buffer)->is_empty)
@@ -78,9 +108,12 @@ int consume(MessageBuffer **buffer, Message **message) {
     /*---------------------------------------*/
     /* TODO 4 : consume message              */
 
-    {}
+    (*message)->data = (*buffer)->messages[(*buffer)->account_id].data;
+    (*message)->sender_id = (*buffer)->messages[(*buffer)->account_id].sender_id;
+    (*buffer)->is_empty++;
 
     /* TODO 4 : END                          */
+    
     /*---------------------------------------*/
 
     return 0;
