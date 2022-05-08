@@ -148,7 +148,7 @@ int produce(MessageBuffer **buffer, int sender_id, int data, int account_id) {
 	s_wait();
 
     	(*buffer)->account_id = account_id; 
-   	(*buffer)->messages[account_id].data = data;
+   	    (*buffer)->messages[account_id].data = data;
     	(*buffer)->messages[account_id].sender_id = sender_id;
 
     	(*buffer)->is_empty--;
